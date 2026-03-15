@@ -1,0 +1,47 @@
+name: PR pipeline
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Static analysis
+        run: ./mvnw checkstyle:check -B
+
+      - name: Run tests
+        run: ./mvnw test -B
+
+      - name: Build jar
+        run: ./mvnw package -DskipTests -B
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ secrets.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Docker image
+        run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          IMAGE=${{ secrets.ECR_REGISTRY }}:pr-${SHORT_SHA}
+          docker build -t $IMAGE .
+          docker push $IMAGE
+          echo "Pushed: $IMAGE"
