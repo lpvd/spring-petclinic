@@ -105,7 +105,7 @@ resource "aws_security_group" "alb" {
   tags = { Name = "${var.project_name}-alb-sg" }
 }
 
-# EC2 — SSH only from my IP, app - only from ALB
+# EC2 — SSH from anywhere (github changes IP ranges of their runners), app - only from ALB
 resource "aws_security_group" "app" {
   name        = "${var.project_name}-app-sg"
   description = "Allow SSH from my IP and app traffic from ALB"
@@ -116,7 +116,7 @@ resource "aws_security_group" "app" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = [var.my_ip]
+    cidr_blocks = ["0.0.0.0/0"]  # used to be [var.my_ip]
   }
 
   ingress {
