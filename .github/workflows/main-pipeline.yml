@@ -99,5 +99,4 @@ jobs:
               -e SPRING_DATASOURCE_PASSWORD="${{ secrets.DB_PASSWORD }}" \
               $IMAGE
 
-            EC2_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
-            echo "==> Done. App running at: http://${EC2_IP}:8080"
+            echo "==> Done. App running at: http://${vars.APP_PUBLIC_URL}"
